@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WSR88 - Write Share Read</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --text-color: #e2e8f0;
+            --card-bg: #111318;
+            --border-color: #222630;
+            --primary-color: #00f2fe;
+            --primary-glow: rgba(0, 242, 254, 0.4);
+            --sidebar-bg: #0b0d12;
+            --hover-color: #1a1e26;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f4f5f7;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --primary-color: #0284c7;
+            --primary-glow: rgba(2, 132, 199, 0.2);
+            --sidebar-bg: #e2e8f0;
+            --hover-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .mobile-top-bar {
+            display: none;
+            position: fixed;
+            top: 0; right: 0; width: 100%;
+            height: 60px;
+            background-color: var(--sidebar-bg);
+            border-bottom: 1px solid var(--border-color);
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+
+        .hamburger-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        aside {
+            width: 280px;
+            background-color: var(--sidebar-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            justify-content: space-between;
+            z-index: 1100;
+            height: 100%;
+        }
+
+        .logo-area {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-shadow: 0 0 12px var(--primary-glow);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-toggle, .settings-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .user-card {
+            background: var(--card-bg);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+
+        .user-card span {
+            max-width: 10ch;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .historique-list {
+            list-style: none;
+            overflow-y: auto;
+            flex-grow: 1;
+            max-height: calc(100vh - 320px);
+        }
+
+        .historique-list::-webkit-scrollbar { width: 4px; }
+        .historique-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+        .historique-list li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .historique-list li:hover { background: var(--hover-color); }
+
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .create-post-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .create-post-box textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-color);
+            resize: none;
+            outline: none;
+            font-size: 15px;
+            min-height: 80px;
+        }
+
+        .image-preview-container {
+            position: relative;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .image-preview-container img {
+            width: 100%;
+            max-height: 200px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.7);
+            color: #ef4444;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn:hover { opacity: 0.9; }
+
+        .post-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .post-author-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .post-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .post-author {
+            font-weight: 700;
+            font-size: 15px;
+            max-width: 10ch;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .post-time { font-size: 12px; color: gray; }
+
+        .delete-post-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .post-content {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+
+        .post-image-display {
+            width: 100%;
+            max-height: 350px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+
+        .post-footer {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        .dot-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .dot-green { background-color: #22c55e; box-shadow: 0 0 6px #22c55e; }
+        .dot-blue { background-color: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 11px;
+            color: gray;
+            padding: 15px 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-top-bar { display: flex; }
+            aside {
+                position: fixed;
+                top: 60px; right: -280px;
+                height: calc(100% - 60px);
+                transition: right 0.3s ease-in-out;
+                box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+            }
+            aside.active { right: 0; }
+            main { margin-top: 60px; height: calc(100vh - 60px); }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <div class="mobile-top-bar">
+        <span style="font-weight: 900; color: var(--primary-color); font-size: 20px;">WSR88</span>
+        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+    </div>
+
+    <aside id="sidebar">
+        <div>
+            <div class="logo-area">
+                <span>WSR88</span>
+                <div style="display: flex; gap: 5px;">
+                    <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
+                    <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
+                </div>
+            </div>
+            
+            <div class="user-card" id="userCardSection"></div>
+            <div id="authButtonsSection" style="margin-bottom: 20px;"></div>
+
+            <p style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Historique / أرشيف</p>
+            <ul class="historique-list" id="historiqueFilterList">
+                <li onclick="filterByDate('all')">Tous / الكل</li>
+            </ul>
+        </div>
+        <footer>
+            Copyright : mohamed005cheikh@gmail.com | by mc88
+        </footer>
+    </aside>
+
+    <main>
+        <div class="create-post-box">
+            <textarea id="postContentInput" placeholder="اكتب مذكرتك هنا باللغة العربية أو الفرنسية... / Écrivez votre note ici..."></textarea>
+            
+            <div class="image-preview-container" id="imagePreviewContainer">
+                <button class="remove-img-btn" onclick="removeSelectedImage()">×</button>
+                <img id="imagePreview" src="" alt="Preview">
+            </div>
+
+            <div class="post-actions">
+                <input type="file" id="imageInput" style="display: none;" accept="image/*" onchange="handleImageSelect(event)">
+                <button class="theme-toggle" onclick="document.getElementById('imageInput').click()">Image / صورة</button>
+                <button class="btn" onclick="handlePublish()">Publier / نشر</button>
+            </div>
+        </div>
+
+        <div id="postsContainer"></div>
+
+        <footer>
+            Copyright : mohamed005cheikh@gmail.com | by mc88
+        </footer>
+    </main>
+
+    <div class="modal" id="signupModal">
+        <div class="modal-content">
+            <h3>إنشاء حساب جديد / Sign Up</h3>
+            <p style="font-size: 12px; color: gray;">اسم المستخدم (أقصاه 10 حروف):</p>
+            <input type="text" id="newUserNameInput" maxlength="10" placeholder="اسم المستخدم...">
+            <p style="font-size: 12px; color: gray;">رقم التعريف ID (3 أرقام فقط بين 001 و 999):</p>
+            <input type="text" id="newUserIdInput" maxlength="3" placeholder="مثال: 088">
+            <button class="btn" onclick="createAccount()">تسجيل / Register</button>
+            <button class="theme-toggle" onclick="closeModal('signupModal')">إلغاء / Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h3>الإعدادات / Settings</h3>
+            <input type="text" id="updateUserNameInput" maxlength="10">
+            <button class="btn" onclick="saveSettings()">حفظ / Save</button>
+            <button class="delete-post-btn" onclick="logoutAccount()" style="text-align: center; padding: 5px;">تسجيل الخروج / Logout</button>
+            <button class="theme-toggle" onclick="closeModal('settingsModal')">إغلاق / Close</button>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnuu4zUH7e-6vhQ1fKa1DwiSNzrQ-Owpt_ZnBiHjEAeEVYJDY9ibg1bkNzD80KJFLnRQ/exec';
+
+        let currentUser = JSON.parse(localStorage.getItem('wsr88_user')) || null;
+        let allPostsCache = [];
+        let allUsersCache = [];
+        let selectedImageBase64 = null;
+
+        function updateAuthUI() {
+            const userCard = document.getElementById('userCardSection');
+            const authButtons = document.getElementById('authButtonsSection');
+
+            if (currentUser) {
+                userCard.style.display = 'block';
+                userCard.innerHTML = `
+                    <p style="color: gray; margin-bottom: 3px;">Compte:</p>
+                    <p><strong>Name:</strong> <span>${currentUser.name}</span></p>
+                    <p><strong>ID:</strong> <span>${currentUser.id}</span></p>
+                `;
+                authButtons.innerHTML = `<button class="btn" style="background:#ef4444; color:white; width:100%;" onclick="logoutAccount()">تسجيل الخروج / Logout</button>`;
+            } else {
+                userCard.style.display = 'none';
+                authButtons.innerHTML = `<button class="btn" style="width:100%;" onclick="openSignupModal()">إنشاء حساب جديد / Sign Up</button>`;
+            }
+        }
+
+        function openSignupModal() {
+            document.getElementById('signupModal').style.display = 'flex';
+        }
+
+        function openSettings() {
+            if (!currentUser) {
+                openSignupModal();
+                return;
+            }
+            document.getElementById('updateUserNameInput').value = currentUser.name;
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function fetchUsersAndData() {
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                allPostsCache = data.posts || [];
+                allUsersCache = data.users || [];
+                renderHistoriqueDates(allPostsCache);
+                renderPosts(allPostsCache);
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+
+        function handleImageSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImageBase64 = e.target.result;
+                    document.getElementById('imagePreview').src = selectedImageBase64;
+                    document.getElementById('imagePreviewContainer').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeSelectedImage() {
+            selectedImageBase64 = null;
+            document.getElementById('imageInput').value = '';
+            document.getElementById('imagePreviewContainer').style.display = 'none';
+        }
+
+        async function createAccount() {
+            const name = document.getElementById('newUserNameInput').value.trim();
+            const idInput = document.getElementById('newUserIdInput').value.trim();
+
+            if (!name || name.length > 10) {
+                alert("الاسم مطلوب ويجب ألا يتجاوز 10 حروف!");
+                return;
+            }
+
+            const idRegex = /^[0-9]{3}$/;
+            if (!idRegex.test(idInput)) {
+                alert("الـ ID يجب أن يتكون من 3 أرقام فقط!");
+                return;
+            }
+
+            currentUser = { id: idInput, name: name };
+            localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: 'register_user', ...currentUser })
+                });
+            } catch(e) {}
+
+            closeModal('signupModal');
+            updateAuthUI();
+            fetchUsersAndData();
+        }
+
+        function saveSettings() {
+            const newName = document.getElementById('updateUserNameInput').value.trim();
+            if (!newName || newName.length > 10) return;
+            currentUser.name = newName;
+            localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
+            updateAuthUI();
+            closeModal('settingsModal');
+            fetchUsersAndData();
+        }
+
+        function logoutAccount() {
+            localStorage.removeItem('wsr88_user');
+            currentUser = null;
+            updateAuthUI();
+            closeModal('settingsModal');
+            fetchUsersAndData();
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            body.setAttribute("data-theme", body.getAttribute("data-theme") === "dark" ? "light" : "dark");
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function renderHistoriqueDates(posts) {
+            const list = document.getElementById('historiqueFilterList');
+            list.innerHTML = `<li onclick="filterByDate('all')">Tous / الكل</li>`;
+            
+            const dates = [...new Set(posts.map(p => new Date(p.timestamp).toLocaleDateString()))].filter(d => d !== "Invalid Date");
+            dates.forEach(dateStr => {
+                const li = document.createElement('li');
+                li.innerText = dateStr;
+                li.onclick = () => filterByDate(dateStr);
+                list.appendChild(li);
+            });
+        }
+
+        function renderPosts(posts) {
+            const container = document.getElementById('postsContainer');
+            container.innerHTML = '';
+
+            posts.slice().reverse().forEach(post => {
+                const firstLetter = post.author ? post.author.charAt(0).toUpperCase().substring(0,1) : 'W';
+                const isOwner = currentUser && post.userId === currentUser.id;
+
+                const postCard = document.createElement('div');
+                postCard.className = 'post-card';
+                postCard.innerHTML = `
+                    <div class="post-header">
+                        <div class="post-author-info">
+                            <div class="post-avatar">${firstLetter}</div>
+                            <div>
+                                <div class="post-author">${post.author || 'Anonymous'}</div>
+                                <div class="post-time">${new Date(post.timestamp).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        ${isOwner ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">حذف / Delete</button>` : ''}
+                    </div>
+                    <div class="post-content">${post.content || ''}</div>
+                    ${post.image ? `<img src="${post.image}" class="post-image-display" alt="Post Image">` : ''}
+                    <div class="post-footer">
+                        <button class="dot-btn" onclick="votePost('${post.id}', 'red')"><span class="dot dot-red"></span> <span id="red-${post.id}">${post.redCount || 0}</span></button>
+                        <button class="dot-btn" onclick="votePost('${post.id}', 'green')"><span class="dot dot-green"></span> <span id="green-${post.id}">${post.greenCount || 0}</span></button>
+                        <button class="dot-btn" onclick="votePost('${post.id}', 'blue')"><span class="dot dot-blue"></span> <span id="blue-${post.id}">${post.blueCount || 0}</span></button>
+                    </div>
+                `;
+                container.appendChild(postCard);
+            });
+        }
+
+        async function handlePublish() {
+            if (!currentUser) {
+                alert("يجب إنشاء حساب أولاً لتتمكن من النشر!");
+                openSignupModal();
+                return;
+            }
+
+            const textarea = document.getElementById('postContentInput');
+            const content = textarea.value.trim();
+
+            if (!content && !selectedImageBase64) {
+                alert("يرجى كتابة محتوى المنشور أو اختيار صورة أولاً!");
+                return;
+            }
+
+            const postData = {
+                type: 'new_post',
+                id: 'post_' + Date.now(),
+                author: currentUser.name,
+                userId: currentUser.id,
+                content: content,
+                image: selectedImageBase64 || '',
+                greenCount: 0,
+                redCount: 0,
+                blueCount: 0,
+                timestamp: new Date().toISOString()
+            };
+
+            allPostsCache.push(postData);
+            renderPosts(allPostsCache);
+            renderHistoriqueDates(allPostsCache);
+            
+            textarea.value = '';
+            removeSelectedImage();
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+            } catch (error) {}
+        }
+
+        async function votePost(postId, colorType) {
+            if (!currentUser) {
+                alert("يجب إنشاء حساب للتصويت!");
+                openSignupModal();
+                return;
+            }
+
+            const votedKey = `voted_${currentUser.id}_${postId}`;
+            const previousVote = localStorage.getItem(votedKey);
+
+            if (previousVote === colorType) {
+                alert("لقد قمت بالتصويت مسبقاً بهذا الخيار!");
+                return;
+            }
+
+            const redSpan = document.getElementById(`red-${postId}`);
+            const greenSpan = document.getElementById(`green-${postId}`);
+            const blueSpan = document.getElementById(`blue-${postId}`);
+
+            if (previousVote === 'red') redSpan.innerText = Math.max(0, parseInt(redSpan.innerText) - 1);
+            if (previousVote === 'green') greenSpan.innerText = Math.max(0, parseInt(greenSpan.innerText) - 1);
+            if (previousVote === 'blue') blueSpan.innerText = Math.max(0, parseInt(blueSpan.innerText) - 1);
+
+            const targetSpan = document.getElementById(`${colorType}-${postId}`);
+            targetSpan.innerText = parseInt(targetSpan.innerText) + 1;
+
+            localStorage.setItem(votedKey, colorType);
+
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'vote',
+                        postId: postId,
+                        greenCount: parseInt(greenSpan.innerText),
+                        redCount: parseInt(redSpan.innerText),
+                        blueCount: parseInt(blueSpan.innerText)
+                    })
+                });
+            } catch(e) {}
+        }
+
+        async function deletePost(postId) {
+            if (confirm("هل تريد حذف هذا المنشور؟")) {
+                allPostsCache = allPostsCache.filter(p => p.id !== postId);
+                renderPosts(allPostsCache);
+                renderHistoriqueDates(allPostsCache);
+            }
+        }
+
+        function filterByDate(dateStr) {
+            if (dateStr === 'all') {
+                renderPosts(allPostsCache);
+            } else {
+                const filtered = allPostsCache.filter(p => new Date(p.timestamp).toLocaleDateString() === dateStr);
+                renderPosts(filtered);
+            }
+        }
+
+        window.onload = () => {
+            updateAuthUI();
+            fetchUsersAndData();
+        };
+    </script>
+</body>
+</html>
