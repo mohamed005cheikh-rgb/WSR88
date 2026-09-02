@@ -1,740 +1,874 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WSR88 - Write Share Read</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #050505;
-            --text-color: #e2e8f0;
-            --card-bg: #111318;
-            --border-color: #222630;
-            --primary-color: #00f2fe;
-            --primary-glow: rgba(0, 242, 254, 0.4);
-            --sidebar-bg: #0b0d12;
-            --hover-color: #1a1e26;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>WSR88 — Write. Share. Read.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;900&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  /* ============ DESIGN TOKENS ============ */
+  :root{
+    --font-body:'Cairo',sans-serif;
+    --font-display:'Fraunces',serif;
+    --radius-sm:8px;
+    --radius-md:14px;
+    --radius-lg:22px;
+    --ease:cubic-bezier(.22,1,.36,1);
+    --vote-red:#ef4444;
+    --vote-green:#22c55e;
+    --vote-blue:#3b82f6;
+  }
 
-        [data-theme="light"] {
-            --bg-color: #f4f5f7;
-            --text-color: #1e293b;
-            --card-bg: #ffffff;
-            --border-color: #cbd5e1;
-            --primary-color: #0284c7;
-            --primary-glow: rgba(2, 132, 199, 0.2);
-            --sidebar-bg: #e2e8f0;
-            --hover-color: #cbd5e1;
-        }
+  /* Theme 1 — Midnight Ink (the studio's own night mode) */
+  [data-theme="midnight-ink"]{
+    --bg:#07080b;
+    --bg-2:#0c0e13;
+    --sidebar:#0a0c10;
+    --card:#101319;
+    --card-2:#141822;
+    --border:#1d2230;
+    --text:#e9edf5;
+    --text-dim:#8992a6;
+    --accent:#00e3f5;
+    --accent-ink:#00181c;
+    --accent-glow:rgba(0,227,245,.28);
+    --shadow:0 20px 50px -20px rgba(0,0,0,.7);
+    --card-style:hairline;
+  }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', sans-serif;
-            transition: background-color 0.3s, color 0.3s;
-        }
+  /* Theme 2 — Ink & Paper (a fountain-pen journal) */
+  [data-theme="ink-paper"]{
+    --bg:#f4efe3;
+    --bg-2:#eee7d5;
+    --sidebar:#efe8d9;
+    --card:#fbf8f0;
+    --card-2:#f4efe3;
+    --border:#ddd2b6;
+    --text:#241c12;
+    --text-dim:#7c6f56;
+    --accent:#1c3a63;
+    --accent-ink:#f4efe3;
+    --accent-glow:rgba(28,58,99,.18);
+    --shadow:0 16px 34px -22px rgba(80,60,20,.4);
+    --card-style:paper;
+  }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
+  /* Theme 3 — Nord Frost (crisp daylight, editorial) */
+  [data-theme="nord-frost"]{
+    --bg:#eef2f6;
+    --bg-2:#e4eaf1;
+    --sidebar:#e6ebf2;
+    --card:#ffffff;
+    --card-2:#f4f7fa;
+    --border:#cdd8e3;
+    --text:#182531;
+    --text-dim:#5c6c7c;
+    --accent:#3466b3;
+    --accent-ink:#ffffff;
+    --accent-glow:rgba(52,102,179,.16);
+    --shadow:0 14px 30px -20px rgba(24,37,49,.22);
+    --card-style:hairline-light;
+  }
 
-        .mobile-top-bar {
-            display: none;
-            position: fixed;
-            top: 0; right: 0; width: 100%;
-            height: 60px;
-            background-color: var(--sidebar-bg);
-            border-bottom: 1px solid var(--border-color);
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-        }
+  /* Theme 4 — Sahara Dusk (desert sunset, warm dark) */
+  [data-theme="sahara-dusk"]{
+    --bg:#160f0c;
+    --bg-2:#1c1210;
+    --sidebar:#140d0b;
+    --card:#221512;
+    --card-2:#2a1a16;
+    --border:#3c2620;
+    --text:#f6e9db;
+    --text-dim:#c2a288;
+    --accent:#ff7a45;
+    --accent-2:#c0392b;
+    --accent-ink:#1a0d08;
+    --accent-glow:rgba(255,122,69,.28);
+    --shadow:0 20px 50px -20px rgba(0,0,0,.6);
+    --card-style:gradient-edge;
+  }
 
-        .hamburger-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 24px;
-            cursor: pointer;
-        }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:var(--font-body);}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    display:flex;
+    height:100vh;
+    overflow:hidden;
+    transition:background-color .45s var(--ease),color .45s var(--ease);
+  }
+  ::selection{background:var(--accent);color:var(--accent-ink);}
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
 
-        aside {
-            width: 280px;
-            background-color: var(--sidebar-bg);
-            border-left: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            justify-content: space-between;
-            z-index: 1100;
-            height: 100%;
-        }
+  button,input,textarea{font-family:inherit;color:inherit;}
+  button{cursor:pointer;}
 
-        .logo-area {
-            font-size: 24px;
-            font-weight: 900;
-            color: var(--primary-color);
-            text-shadow: 0 0 12px var(--primary-glow);
-            letter-spacing: 2px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+  /* ============ MOBILE TOP BAR ============ */
+  .mobile-top-bar{
+    display:none;
+    position:fixed;top:0;right:0;left:0;height:58px;
+    background:var(--sidebar);
+    border-bottom:1px solid var(--border);
+    align-items:center;justify-content:space-between;
+    padding:0 16px;z-index:1000;
+    backdrop-filter:blur(10px);
+  }
+  .mobile-wordmark{font-family:var(--font-display);font-weight:700;font-size:19px;color:var(--accent);}
+  .icon-btn{
+    background:none;border:1px solid var(--border);color:var(--text);
+    width:38px;height:38px;border-radius:var(--radius-sm);
+    display:flex;align-items:center;justify-content:center;font-size:17px;
+    transition:border-color .25s var(--ease),transform .2s var(--ease);
+  }
+  .icon-btn:hover{border-color:var(--accent);}
+  .icon-btn:active{transform:scale(.92);}
 
-        .theme-toggle, .settings-btn {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 5px 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
+  /* ============ SIDEBAR ============ */
+  aside{
+    width:290px;flex-shrink:0;
+    background:var(--sidebar);
+    border-left:1px solid var(--border);
+    display:flex;flex-direction:column;
+    padding:22px 18px;
+    height:100%;
+    transition:background-color .45s var(--ease),border-color .45s var(--ease);
+  }
+  .sidebar-top{flex-shrink:0;}
+  .logo-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+  .wordmark{font-family:var(--font-display);font-weight:700;font-size:25px;letter-spacing:.5px;color:var(--accent);}
+  .wordmark small{display:block;font-family:var(--font-body);font-weight:400;font-size:10.5px;color:var(--text-dim);letter-spacing:1.5px;margin-top:2px;}
+  .top-actions{display:flex;gap:6px;}
 
-        .user-card {
-            background: var(--card-bg);
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-            font-size: 13px;
-        }
+  /* theme picker */
+  .theme-picker{position:relative;}
+  .theme-swatches{
+    position:absolute;top:46px;left:0;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius-md);padding:10px;
+    display:none;grid-template-columns:repeat(4,1fr);gap:8px;
+    box-shadow:var(--shadow);z-index:1400;width:172px;
+  }
+  .theme-swatches.open{display:grid;animation:pop-in .22s var(--ease);}
+  .swatch{
+    width:34px;height:34px;border-radius:50%;border:2px solid transparent;
+    cursor:pointer;position:relative;transition:transform .2s var(--ease),border-color .2s var(--ease);
+  }
+  .swatch:hover{transform:scale(1.08);}
+  .swatch.active{border-color:var(--text);}
+  .swatch[data-t="midnight-ink"]{background:linear-gradient(135deg,#07080b,#00e3f5);}
+  .swatch[data-t="ink-paper"]{background:linear-gradient(135deg,#f4efe3,#1c3a63);}
+  .swatch[data-t="nord-frost"]{background:linear-gradient(135deg,#eef2f6,#3466b3);}
+  .swatch[data-t="sahara-dusk"]{background:linear-gradient(135deg,#160f0c,#ff7a45);}
 
-        .user-card span {
-            max-width: 10ch;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            display: inline-block;
-            vertical-align: middle;
-        }
+  .user-card{
+    background:var(--card);border:1px solid var(--border);
+    padding:13px 14px;border-radius:var(--radius-md);
+    margin-bottom:14px;font-size:13px;display:none;
+  }
+  .user-card .uc-label{color:var(--text-dim);font-size:11px;margin-bottom:6px;}
+  .user-card .uc-row{display:flex;justify-content:space-between;margin-top:2px;}
+  .user-card span.trunc{max-width:11ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;font-weight:600;}
 
-        .historique-list {
-            list-style: none;
-            overflow-y: auto;
-            flex-grow: 1;
-            max-height: calc(100vh - 320px);
-        }
+  .primary-btn{
+    background:var(--accent);color:var(--accent-ink);border:none;
+    padding:11px 16px;border-radius:var(--radius-sm);font-weight:700;font-size:14px;
+    width:100%;transition:filter .2s var(--ease),transform .15s var(--ease);
+  }
+  .primary-btn:hover{filter:brightness(1.08);}
+  .primary-btn:active{transform:scale(.97);}
+  .ghost-btn{
+    background:transparent;border:1px solid var(--border);color:var(--text);
+    padding:9px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;
+    width:100%;transition:border-color .2s var(--ease),background .2s var(--ease);
+  }
+  .ghost-btn:hover{border-color:var(--accent);}
+  .danger-text-btn{background:none;border:none;color:var(--vote-red);font-size:12.5px;font-weight:700;padding:8px;width:100%;}
 
-        .historique-list::-webkit-scrollbar { width: 4px; }
-        .historique-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+  #authButtonsSection{margin-bottom:18px;}
 
-        .historique-list li {
-            padding: 10px;
-            margin-bottom: 8px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        .historique-list li:hover { background: var(--hover-color); }
+  .archive-label{font-size:11.5px;font-weight:700;color:var(--text-dim);letter-spacing:.5px;margin-bottom:9px;display:block;}
+  .historique-list{list-style:none;overflow-y:auto;flex-grow:1;min-height:60px;}
+  .historique-list li{
+    padding:9px 11px;margin-bottom:6px;background:var(--card);
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    cursor:pointer;font-size:13.5px;transition:background .2s var(--ease),border-color .2s var(--ease),transform .15s var(--ease);
+  }
+  .historique-list li:hover{border-color:var(--accent);transform:translateX(-2px);}
+  .historique-list li.active-filter{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700;}
 
-        main {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            overflow-y: auto;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
+  .sidebar-foot{text-align:center;font-size:10.5px;color:var(--text-dim);padding-top:14px;border-top:1px solid var(--border);margin-top:14px;flex-shrink:0;}
 
-        .create-post-box {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
+  /* ============ MAIN ============ */
+  main{
+    flex-grow:1;display:flex;flex-direction:column;
+    height:100%;overflow-y:auto;padding:28px 20px 10px;
+  }
+  .main-inner{max-width:640px;width:100%;margin:0 auto;flex:1;}
 
-        .create-post-box textarea {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: var(--text-color);
-            resize: none;
-            outline: none;
-            font-size: 15px;
-            min-height: 80px;
-        }
+  .compose{
+    background:var(--card);border:1px solid var(--border);
+    padding:16px;border-radius:var(--radius-lg);margin-bottom:24px;
+    transition:border-color .3s var(--ease),box-shadow .3s var(--ease);
+  }
+  .compose:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-glow);}
+  .compose textarea{
+    width:100%;background:transparent;border:none;outline:none;resize:none;
+    font-size:15.5px;min-height:76px;line-height:1.65;color:var(--text);
+  }
+  .compose textarea::placeholder{color:var(--text-dim);}
 
-        .image-preview-container {
-            position: relative;
-            margin-top: 10px;
-            display: none;
-        }
+  .image-preview-container{position:relative;margin-top:10px;display:none;border-radius:var(--radius-md);overflow:hidden;}
+  .image-preview-container img{width:100%;max-height:220px;object-fit:cover;display:block;}
+  .remove-img-btn{
+    position:absolute;top:8px;left:8px;background:rgba(10,10,10,.65);color:#fff;
+    border:none;border-radius:50%;width:26px;height:26px;font-weight:bold;
+    backdrop-filter:blur(4px);
+  }
 
-        .image-preview-container img {
-            width: 100%;
-            max-height: 200px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
+  .compose-actions{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:12px;margin-top:12px;}
+  .compose-actions .ghost-btn,.compose-actions .primary-btn{width:auto;}
 
-        .remove-img-btn {
-            position: absolute;
-            top: 5px;
-            left: 5px;
-            background: rgba(0,0,0,0.7);
-            color: #ef4444;
-            border: none;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+  /* Feed skeleton */
+  .skeleton-card{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:18px;margin-bottom:14px;overflow:hidden;position:relative;
+  }
+  .skel-line{height:11px;border-radius:5px;background:var(--border);margin-bottom:9px;position:relative;overflow:hidden;}
+  .skel-line::after{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,var(--bg-2),transparent);
+    animation:shimmer 1.4s infinite;
+  }
 
-        .post-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-top: 1px solid var(--border-color);
-            padding-top: 10px;
-            margin-top: 10px;
-        }
+  .empty-state{
+    text-align:center;padding:60px 20px;color:var(--text-dim);
+  }
+  .empty-state .glyph{font-family:var(--font-display);font-size:40px;color:var(--accent);margin-bottom:10px;}
+  .empty-state p{font-size:14px;max-width:340px;margin:0 auto;line-height:1.7;}
 
-        .btn {
-            background-color: var(--primary-color);
-            color: #000;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        .btn:hover { opacity: 0.9; }
+  /* ============ POST CARD ============ */
+  .post-card{
+    background:var(--card);border:1px solid var(--border);
+    padding:19px 19px 15px;border-radius:var(--radius-lg);margin-bottom:15px;
+    opacity:0;transform:translateY(14px);
+    animation:rise .5s var(--ease) forwards;
+    transition:border-color .3s var(--ease);
+    position:relative;
+  }
+  /* per-theme card accents */
+  [data-theme="midnight-ink"] .post-card:hover{border-color:#2a3244;}
+  [data-theme="ink-paper"] .post-card{box-shadow:var(--shadow);border-style:solid;}
+  [data-theme="nord-frost"] .post-card:hover{border-color:#a9bcd0;}
+  [data-theme="sahara-dusk"] .post-card{border-image:linear-gradient(120deg,var(--accent),transparent 60%) 1;}
 
-        .post-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-        }
+  .post-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .post-author-info{display:flex;align-items:center;gap:11px;}
+  .post-avatar{
+    width:40px;height:40px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:15px;flex-shrink:0;
+    box-shadow:0 4px 14px -4px var(--accent-glow);
+  }
+  .post-author{font-weight:700;font-size:14.5px;max-width:12ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .post-time{font-size:11.5px;color:var(--text-dim);margin-top:1px;}
+  .delete-post-btn{background:none;border:none;color:var(--vote-red);cursor:pointer;font-size:12px;font-weight:700;padding:6px 8px;border-radius:6px;transition:background .2s var(--ease);}
+  .delete-post-btn:hover{background:rgba(239,68,68,.12);}
 
-        .post-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
+  .post-content{font-size:15.5px;line-height:1.75;margin-bottom:14px;word-break:break-word;white-space:pre-wrap;}
+  .post-image-display{width:100%;max-height:380px;object-fit:cover;border-radius:var(--radius-md);margin-bottom:14px;border:1px solid var(--border);display:block;}
 
-        .post-author-info {
-            display: flex;
-            align-items: center;
-        }
+  .post-footer{display:flex;justify-content:space-around;align-items:center;border-top:1px solid var(--border);padding-top:11px;}
+  .dot-btn{
+    background:none;border:none;display:flex;align-items:center;gap:7px;
+    font-size:13.5px;font-weight:600;padding:7px 12px;border-radius:20px;
+    transition:background .2s var(--ease),transform .15s var(--ease);
+  }
+  .dot-btn:hover{background:var(--bg-2);}
+  .dot-btn:active{transform:scale(.93);}
+  .dot-btn.voted{background:var(--bg-2);}
+  .dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0;transition:box-shadow .2s var(--ease);}
+  .dot-red{background:var(--vote-red);}
+  .dot-green{background:var(--vote-green);}
+  .dot-blue{background:var(--vote-blue);}
+  .dot-btn.voted .dot-red{box-shadow:0 0 0 4px rgba(239,68,68,.22);}
+  .dot-btn.voted .dot-green{box-shadow:0 0 0 4px rgba(34,197,94,.22);}
+  .dot-btn.voted .dot-blue{box-shadow:0 0 0 4px rgba(59,130,246,.22);}
+  .vote-bump{animation:bump .35s var(--ease);}
 
-        .post-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000;
-            font-weight: bold;
-            margin-left: 10px;
-        }
+  footer.page-footer{text-align:center;font-size:11px;color:var(--text-dim);padding:18px 0;margin-top:auto;}
 
-        .post-author {
-            font-weight: 700;
-            font-size: 15px;
-            max-width: 10ch;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+  /* ============ MODALS ============ */
+  .modal{
+    display:none;position:fixed;inset:0;
+    background:rgba(4,4,6,.55);backdrop-filter:blur(3px);
+    align-items:center;justify-content:center;z-index:2000;
+  }
+  .modal.open{display:flex;animation:fade-bg .2s var(--ease);}
+  .modal-content{
+    background:var(--card);border:1px solid var(--border);
+    padding:26px;border-radius:var(--radius-lg);width:90%;max-width:400px;
+    display:flex;flex-direction:column;gap:13px;
+    box-shadow:var(--shadow);
+    animation:modal-in .28s var(--ease);
+  }
+  .modal-content h3{font-family:var(--font-display);font-weight:700;font-size:20px;margin-bottom:2px;}
+  .modal-hint{font-size:12px;color:var(--text-dim);margin-bottom:-4px;}
+  .modal-content input{
+    width:100%;background:var(--bg-2);border:1px solid var(--border);color:var(--text);
+    padding:11px 12px;border-radius:var(--radius-sm);outline:none;font-size:14.5px;
+    transition:border-color .2s var(--ease);
+  }
+  .modal-content input:focus{border-color:var(--accent);}
 
-        .post-time { font-size: 12px; color: gray; }
+  /* ============ TOASTS ============ */
+  #toastStack{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:3000;display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .toast{
+    background:var(--card);border:1px solid var(--border);color:var(--text);
+    padding:11px 18px;border-radius:30px;font-size:13.5px;font-weight:600;
+    box-shadow:var(--shadow);animation:toast-in .3s var(--ease);white-space:nowrap;
+  }
+  .toast.toast-out{animation:toast-out .25s var(--ease) forwards;}
 
-        .delete-post-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-        }
+  /* ============ ANIMATIONS ============ */
+  @keyframes rise{to{opacity:1;transform:translateY(0);}}
+  @keyframes pop-in{from{opacity:0;transform:translateY(-6px) scale(.96);}to{opacity:1;transform:translateY(0) scale(1);}}
+  @keyframes modal-in{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+  @keyframes fade-bg{from{opacity:0;}to{opacity:1;}}
+  @keyframes toast-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes toast-out{to{opacity:0;transform:translateY(6px);}}
+  @keyframes bump{0%{transform:scale(1);}35%{transform:scale(1.28);}100%{transform:scale(1);}}
+  @keyframes shimmer{100%{transform:translateX(100%);}}
+  .skel-line::after{transform:translateX(-100%);}
 
-        .post-content {
-            font-size: 15px;
-            line-height: 1.6;
-            margin-bottom: 15px;
-            word-break: break-word;
-        }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001s !important;transition-duration:.001s !important;}
+  }
 
-        .post-image-display {
-            width: 100%;
-            max-height: 350px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-        }
-
-        .post-footer {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            border-top: 1px solid var(--border-color);
-            padding-top: 12px;
-        }
-
-        .dot-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: var(--text-color);
-        }
-
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .dot-red { background-color: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .dot-green { background-color: #22c55e; box-shadow: 0 0 6px #22c55e; }
-        .dot-blue { background-color: #3b82f6; box-shadow: 0 0 6px #3b82f6; }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-        }
-
-        .modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 25px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .modal-content input {
-            width: 100%;
-            background: transparent;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 10px;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        footer {
-            text-align: center;
-            font-size: 11px;
-            color: gray;
-            padding: 15px 0;
-            border-top: 1px solid var(--border-color);
-            margin-top: auto;
-        }
-
-        @media (max-width: 768px) {
-            .mobile-top-bar { display: flex; }
-            aside {
-                position: fixed;
-                top: 60px; right: -280px;
-                height: calc(100% - 60px);
-                transition: right 0.3s ease-in-out;
-                box-shadow: -5px 0 15px rgba(0,0,0,0.5);
-            }
-            aside.active { right: 0; }
-            main { margin-top: 60px; height: calc(100vh - 60px); }
-        }
-    </style>
+  /* ============ RESPONSIVE ============ */
+  @media (max-width:768px){
+    .mobile-top-bar{display:flex;}
+    aside{
+      position:fixed;top:58px;right:-300px;width:280px;
+      height:calc(100% - 58px);z-index:1100;
+      transition:right .32s var(--ease);
+      box-shadow:-10px 0 30px rgba(0,0,0,.35);
+    }
+    aside.active{right:0;}
+    .sidebar-overlay{display:none;position:fixed;inset:58px 0 0 0;background:rgba(0,0,0,.4);z-index:1050;}
+    .sidebar-overlay.active{display:block;}
+    main{margin-top:58px;height:calc(100vh - 58px);padding:18px 14px 4px;}
+    .post-card{padding:16px 15px 12px;}
+  }
+</style>
 </head>
-<body data-theme="dark">
+<body data-theme="midnight-ink">
 
-    <div class="mobile-top-bar">
-        <span style="font-weight: 900; color: var(--primary-color); font-size: 20px;">WSR88</span>
-        <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+  <div class="mobile-top-bar">
+    <span class="mobile-wordmark">WSR88</span>
+    <div style="display:flex;gap:8px;">
+      <div class="theme-picker">
+        <button class="icon-btn" onclick="toggleThemeMenu('mobile')" title="Themes" aria-label="Themes">◐</button>
+        <div class="theme-swatches" id="themeSwatchesMobile"></div>
+      </div>
+      <button class="icon-btn hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
     </div>
+  </div>
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    <aside id="sidebar">
-        <div>
-            <div class="logo-area">
-                <span>WSR88</span>
-                <div style="display: flex; gap: 5px;">
-                    <button class="settings-btn" onclick="openSettings()" title="Settings">⚙️</button>
-                    <button class="theme-toggle" onclick="toggleTheme()">☀️/🌙</button>
-                </div>
-            </div>
-            
-            <div class="user-card" id="userCardSection"></div>
-            <div id="authButtonsSection" style="margin-bottom: 20px;"></div>
-
-            <p style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Historique / أرشيف</p>
-            <ul class="historique-list" id="historiqueFilterList">
-                <li onclick="filterByDate('all')">Tous / الكل</li>
-            </ul>
+  <aside id="sidebar">
+    <div class="sidebar-top">
+      <div class="logo-row">
+        <div class="wordmark">WSR88<small>WRITE · SHARE · READ</small></div>
+        <div class="top-actions">
+          <div class="theme-picker">
+            <button class="icon-btn" onclick="toggleThemeMenu('desktop')" title="Themes" aria-label="Themes">◐</button>
+            <div class="theme-swatches" id="themeSwatchesDesktop"></div>
+          </div>
+          <button class="icon-btn" onclick="openSettings()" title="Settings" aria-label="Settings">⚙</button>
         </div>
-        <footer>
-            Copyright : mohamed005cheikh@gmail.com | by mc88
-        </footer>
-    </aside>
+      </div>
 
-    <main>
-        <div class="create-post-box">
-            <textarea id="postContentInput" placeholder="اكتب مذكرتك هنا باللغة العربية أو الفرنسية... / Écrivez votre note ici..."></textarea>
-            
-            <div class="image-preview-container" id="imagePreviewContainer">
-                <button class="remove-img-btn" onclick="removeSelectedImage()">×</button>
-                <img id="imagePreview" src="" alt="Preview">
-            </div>
+      <div class="user-card" id="userCardSection"></div>
+      <div id="authButtonsSection"></div>
 
-            <div class="post-actions">
-                <input type="file" id="imageInput" style="display: none;" accept="image/*" onchange="handleImageSelect(event)">
-                <button class="theme-toggle" onclick="document.getElementById('imageInput').click()">Image / صورة</button>
-                <button class="btn" onclick="handlePublish()">Publier / نشر</button>
-            </div>
-        </div>
-
-        <div id="postsContainer"></div>
-
-        <footer>
-            Copyright : mohamed005cheikh@gmail.com | by mc88
-        </footer>
-    </main>
-
-    <div class="modal" id="signupModal">
-        <div class="modal-content">
-            <h3>إنشاء حساب جديد / Sign Up</h3>
-            <p style="font-size: 12px; color: gray;">اسم المستخدم (أقصاه 10 حروف):</p>
-            <input type="text" id="newUserNameInput" maxlength="10" placeholder="اسم المستخدم...">
-            <p style="font-size: 12px; color: gray;">رقم التعريف ID (3 أرقام فقط بين 001 و 999):</p>
-            <input type="text" id="newUserIdInput" maxlength="3" placeholder="مثال: 088">
-            <button class="btn" onclick="createAccount()">تسجيل / Register</button>
-            <button class="theme-toggle" onclick="closeModal('signupModal')">إلغاء / Cancel</button>
-        </div>
+      <span class="archive-label">أرشيف · ARCHIVE</span>
     </div>
+    <ul class="historique-list" id="historiqueFilterList">
+      <li onclick="filterByDate('all')" class="active-filter">الكل / Tous</li>
+    </ul>
+    <div class="sidebar-foot">© WSR88 · mohamed005cheikh@gmail.com<br>by mc88</div>
+  </aside>
 
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <h3>الإعدادات / Settings</h3>
-            <input type="text" id="updateUserNameInput" maxlength="10">
-            <button class="btn" onclick="saveSettings()">حفظ / Save</button>
-            <button class="delete-post-btn" onclick="logoutAccount()" style="text-align: center; padding: 5px;">تسجيل الخروج / Logout</button>
-            <button class="theme-toggle" onclick="closeModal('settingsModal')">إغلاق / Close</button>
+  <main>
+    <div class="main-inner">
+      <div class="compose">
+        <textarea id="postContentInput" placeholder="اكتب مذكرتك هنا... / Écrivez votre note ici..."></textarea>
+        <div class="image-preview-container" id="imagePreviewContainer">
+          <button class="remove-img-btn" onclick="removeSelectedImage()">×</button>
+          <img id="imagePreview" src="" alt="Preview">
         </div>
+        <div class="compose-actions">
+          <input type="file" id="imageInput" style="display:none;" accept="image/*" onchange="handleImageSelect(event)">
+          <button class="ghost-btn" onclick="document.getElementById('imageInput').click()">🖼 صورة / Image</button>
+          <button class="primary-btn" onclick="handlePublish()">نشر / Publier</button>
+        </div>
+      </div>
+
+      <div id="postsContainer"></div>
     </div>
+    <footer class="page-footer">Copyright — mohamed005cheikh@gmail.com | by mc88</footer>
+  </main>
 
-    <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnuu4zUH7e-6vhQ1fKa1DwiSNzrQ-Owpt_ZnBiHjEAeEVYJDY9ibg1bkNzD80KJFLnRQ/exec';
+  <div class="modal" id="signupModal">
+    <div class="modal-content">
+      <h3>إنشاء حساب جديد</h3>
+      <p class="modal-hint">Sign up · اسم مستعار مجهول، بدون بريد إلكتروني</p>
+      <input type="text" id="newUserNameInput" maxlength="10" placeholder="اسم المستخدم (10 حروف كحد أقصى)">
+      <input type="text" id="newUserIdInput" maxlength="3" placeholder="ID — 3 أرقام، مثال: 088">
+      <button class="primary-btn" onclick="createAccount()">تسجيل / Register</button>
+      <button class="ghost-btn" onclick="closeModal('signupModal')">إلغاء / Cancel</button>
+    </div>
+  </div>
 
-        let currentUser = JSON.parse(localStorage.getItem('wsr88_user')) || null;
-        let allPostsCache = [];
-        let allUsersCache = [];
-        let selectedImageBase64 = null;
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <h3>الإعدادات</h3>
+      <p class="modal-hint">Settings</p>
+      <input type="text" id="updateUserNameInput" maxlength="10">
+      <button class="primary-btn" onclick="saveSettings()">حفظ / Save</button>
+      <button class="danger-text-btn" onclick="logoutAccount()">تسجيل الخروج / Logout</button>
+      <button class="ghost-btn" onclick="closeModal('settingsModal')">إغلاق / Close</button>
+    </div>
+  </div>
 
-        function updateAuthUI() {
-            const userCard = document.getElementById('userCardSection');
-            const authButtons = document.getElementById('authButtonsSection');
+  <div id="toastStack"></div>
 
-            if (currentUser) {
-                userCard.style.display = 'block';
-                userCard.innerHTML = `
-                    <p style="color: gray; margin-bottom: 3px;">Compte:</p>
-                    <p><strong>Name:</strong> <span>${currentUser.name}</span></p>
-                    <p><strong>ID:</strong> <span>${currentUser.id}</span></p>
-                `;
-                authButtons.innerHTML = `<button class="btn" style="background:#ef4444; color:white; width:100%;" onclick="logoutAccount()">تسجيل الخروج / Logout</button>`;
-            } else {
-                userCard.style.display = 'none';
-                authButtons.innerHTML = `<button class="btn" style="width:100%;" onclick="openSignupModal()">إنشاء حساب جديد / Sign Up</button>`;
-            }
-        }
+<script>
+/* =========================================================
+   WSR88 — frontend only. All backend calls, request bodies,
+   localStorage keys and data shapes below are UNCHANGED from
+   the original build. Only presentation/UX logic was added.
+   ========================================================= */
 
-        function openSignupModal() {
-            document.getElementById('signupModal').style.display = 'flex';
-        }
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwnuu4zUH7e-6vhQ1fKa1DwiSNzrQ-Owpt_ZnBiHjEAeEVYJDY9ibg1bkNzD80KJFLnRQ/exec';
 
-        function openSettings() {
-            if (!currentUser) {
-                openSignupModal();
-                return;
-            }
-            document.getElementById('updateUserNameInput').value = currentUser.name;
-            document.getElementById('settingsModal').style.display = 'flex';
-        }
+let currentUser = JSON.parse(localStorage.getItem('wsr88_user')) || null;
+let allPostsCache = [];
+let allUsersCache = [];
+let selectedImageBase64 = null;
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
+/* ---------- THEME SYSTEM (presentation only) ---------- */
+const THEMES = [
+  {id:'midnight-ink', label:'Midnight Ink'},
+  {id:'ink-paper',    label:'Ink & Paper'},
+  {id:'nord-frost',   label:'Nord Frost'},
+  {id:'sahara-dusk',  label:'Sahara Dusk'}
+];
 
-        async function fetchUsersAndData() {
-            try {
-                const response = await fetch(SCRIPT_URL);
-                const data = await response.json();
-                allPostsCache = data.posts || [];
-                allUsersCache = data.users || [];
-                renderHistoriqueDates(allPostsCache);
-                renderPosts(allPostsCache);
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            }
-        }
+function buildSwatches(containerId){
+  const el = document.getElementById(containerId);
+  el.innerHTML = THEMES.map(t =>
+    `<button class="swatch" data-t="${t.id}" title="${t.label}" onclick="setTheme('${t.id}')"></button>`
+  ).join('');
+}
 
-        function handleImageSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    selectedImageBase64 = e.target.result;
-                    document.getElementById('imagePreview').src = selectedImageBase64;
-                    document.getElementById('imagePreviewContainer').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+function setTheme(themeId){
+  document.body.setAttribute('data-theme', themeId);
+  localStorage.setItem('wsr88_theme', themeId);
+  document.querySelectorAll('.swatch').forEach(s => s.classList.toggle('active', s.dataset.t === themeId));
+  document.querySelectorAll('.theme-swatches').forEach(s => s.classList.remove('open'));
+}
 
-        function removeSelectedImage() {
-            selectedImageBase64 = null;
-            document.getElementById('imageInput').value = '';
-            document.getElementById('imagePreviewContainer').style.display = 'none';
-        }
+function toggleThemeMenu(which){
+  const id = which === 'mobile' ? 'themeSwatchesMobile' : 'themeSwatchesDesktop';
+  document.querySelectorAll('.theme-swatches').forEach(s => {
+    if (s.id !== id) s.classList.remove('open');
+  });
+  document.getElementById(id).classList.toggle('open');
+}
 
-        async function createAccount() {
-            const name = document.getElementById('newUserNameInput').value.trim();
-            const idInput = document.getElementById('newUserIdInput').value.trim();
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.theme-picker')) {
+    document.querySelectorAll('.theme-swatches').forEach(s => s.classList.remove('open'));
+  }
+});
 
-            if (!name || name.length > 10) {
-                alert("الاسم مطلوب ويجب ألا يتجاوز 10 حروف!");
-                return;
-            }
+function initTheme(){
+  buildSwatches('themeSwatchesMobile');
+  buildSwatches('themeSwatchesDesktop');
+  const saved = localStorage.getItem('wsr88_theme') || 'midnight-ink';
+  setTheme(saved);
+}
 
-            const idRegex = /^[0-9]{3}$/;
-            if (!idRegex.test(idInput)) {
-                alert("الـ ID يجب أن يتكون من 3 أرقام فقط!");
-                return;
-            }
+/* ---------- TOASTS (replaces alert() with same trigger logic) ---------- */
+function toast(msg){
+  const stack = document.getElementById('toastStack');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  stack.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('toast-out');
+    setTimeout(() => t.remove(), 260);
+  }, 2400);
+}
 
-            currentUser = { id: idInput, name: name };
-            localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
-            
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'register_user', ...currentUser })
-                });
-            } catch(e) {}
+/* ---------- AVATAR COLOR (decorative only) ---------- */
+function avatarColorFor(seed){
+  let hash = 0;
+  const s = String(seed || 'W');
+  for (let i = 0; i < s.length; i++) hash = s.charCodeAt(i) + ((hash << 5) - hash);
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue}, 62%, 46%)`;
+}
 
-            closeModal('signupModal');
-            updateAuthUI();
-            fetchUsersAndData();
-        }
+/* ---------- AUTH UI ---------- */
+function updateAuthUI() {
+    const userCard = document.getElementById('userCardSection');
+    const authButtons = document.getElementById('authButtonsSection');
 
-        function saveSettings() {
-            const newName = document.getElementById('updateUserNameInput').value.trim();
-            if (!newName || newName.length > 10) return;
-            currentUser.name = newName;
-            localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
-            updateAuthUI();
-            closeModal('settingsModal');
-            fetchUsersAndData();
-        }
+    if (currentUser) {
+        userCard.style.display = 'block';
+        userCard.innerHTML = `
+            <div class="uc-label">Compte / الحساب</div>
+            <div class="uc-row"><span>Name</span><span class="trunc">${currentUser.name}</span></div>
+            <div class="uc-row"><span>ID</span><span class="trunc">${currentUser.id}</span></div>
+        `;
+        authButtons.innerHTML = `<button class="ghost-btn" style="color:var(--vote-red);border-color:var(--vote-red);" onclick="logoutAccount()">تسجيل الخروج / Logout</button>`;
+    } else {
+        userCard.style.display = 'none';
+        authButtons.innerHTML = `<button class="primary-btn" onclick="openSignupModal()">إنشاء حساب جديد / Sign Up</button>`;
+    }
+}
 
-        function logoutAccount() {
-            localStorage.removeItem('wsr88_user');
-            currentUser = null;
-            updateAuthUI();
-            closeModal('settingsModal');
-            fetchUsersAndData();
-        }
+function openSignupModal() {
+    document.getElementById('signupModal').classList.add('open');
+}
 
-        function toggleTheme() {
-            const body = document.body;
-            body.setAttribute("data-theme", body.getAttribute("data-theme") === "dark" ? "light" : "dark");
-        }
+function openSettings() {
+    if (!currentUser) {
+        openSignupModal();
+        return;
+    }
+    document.getElementById('updateUserNameInput').value = currentUser.name;
+    document.getElementById('settingsModal').classList.add('open');
+}
 
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('active');
-        }
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('open');
+}
 
-        function renderHistoriqueDates(posts) {
-            const list = document.getElementById('historiqueFilterList');
-            list.innerHTML = `<li onclick="filterByDate('all')">Tous / الكل</li>`;
-            
-            const dates = [...new Set(posts.map(p => new Date(p.timestamp).toLocaleDateString()))].filter(d => d !== "Invalid Date");
-            dates.forEach(dateStr => {
-                const li = document.createElement('li');
-                li.innerText = dateStr;
-                li.onclick = () => filterByDate(dateStr);
-                list.appendChild(li);
-            });
-        }
+/* ---------- DATA FETCH (unchanged backend call) ---------- */
+async function fetchUsersAndData() {
+    renderSkeleton();
+    try {
+        const response = await fetch(SCRIPT_URL);
+        const data = await response.json();
+        allPostsCache = data.posts || [];
+        allUsersCache = data.users || [];
+        renderHistoriqueDates(allPostsCache);
+        renderPosts(allPostsCache);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        renderPosts(allPostsCache);
+    }
+}
 
-        function renderPosts(posts) {
-            const container = document.getElementById('postsContainer');
-            container.innerHTML = '';
+function renderSkeleton(){
+    const container = document.getElementById('postsContainer');
+    if (allPostsCache.length) return; // don't flash skeleton on refetches once data exists
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+        html += `<div class="skeleton-card">
+            <div class="skel-line" style="width:40%"></div>
+            <div class="skel-line" style="width:90%"></div>
+            <div class="skel-line" style="width:70%"></div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
 
-            posts.slice().reverse().forEach(post => {
-                const firstLetter = post.author ? post.author.charAt(0).toUpperCase().substring(0,1) : 'W';
-                const isOwner = currentUser && post.userId === currentUser.id;
-
-                const postCard = document.createElement('div');
-                postCard.className = 'post-card';
-                postCard.innerHTML = `
-                    <div class="post-header">
-                        <div class="post-author-info">
-                            <div class="post-avatar">${firstLetter}</div>
-                            <div>
-                                <div class="post-author">${post.author || 'Anonymous'}</div>
-                                <div class="post-time">${new Date(post.timestamp).toLocaleDateString()}</div>
-                            </div>
-                        </div>
-                        ${isOwner ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">حذف / Delete</button>` : ''}
-                    </div>
-                    <div class="post-content">${post.content || ''}</div>
-                    ${post.image ? `<img src="${post.image}" class="post-image-display" alt="Post Image">` : ''}
-                    <div class="post-footer">
-                        <button class="dot-btn" onclick="votePost('${post.id}', 'red')"><span class="dot dot-red"></span> <span id="red-${post.id}">${post.redCount || 0}</span></button>
-                        <button class="dot-btn" onclick="votePost('${post.id}', 'green')"><span class="dot dot-green"></span> <span id="green-${post.id}">${post.greenCount || 0}</span></button>
-                        <button class="dot-btn" onclick="votePost('${post.id}', 'blue')"><span class="dot dot-blue"></span> <span id="blue-${post.id}">${post.blueCount || 0}</span></button>
-                    </div>
-                `;
-                container.appendChild(postCard);
-            });
-        }
-
-        async function handlePublish() {
-            if (!currentUser) {
-                alert("يجب إنشاء حساب أولاً لتتمكن من النشر!");
-                openSignupModal();
-                return;
-            }
-
-            const textarea = document.getElementById('postContentInput');
-            const content = textarea.value.trim();
-
-            if (!content && !selectedImageBase64) {
-                alert("يرجى كتابة محتوى المنشور أو اختيار صورة أولاً!");
-                return;
-            }
-
-            const postData = {
-                type: 'new_post',
-                id: 'post_' + Date.now(),
-                author: currentUser.name,
-                userId: currentUser.id,
-                content: content,
-                image: selectedImageBase64 || '',
-                greenCount: 0,
-                redCount: 0,
-                blueCount: 0,
-                timestamp: new Date().toISOString()
-            };
-
-            allPostsCache.push(postData);
-            renderPosts(allPostsCache);
-            renderHistoriqueDates(allPostsCache);
-            
-            textarea.value = '';
-            removeSelectedImage();
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(postData)
-                });
-            } catch (error) {}
-        }
-
-        async function votePost(postId, colorType) {
-            if (!currentUser) {
-                alert("يجب إنشاء حساب للتصويت!");
-                openSignupModal();
-                return;
-            }
-
-            const votedKey = `voted_${currentUser.id}_${postId}`;
-            const previousVote = localStorage.getItem(votedKey);
-
-            if (previousVote === colorType) {
-                alert("لقد قمت بالتصويت مسبقاً بهذا الخيار!");
-                return;
-            }
-
-            const redSpan = document.getElementById(`red-${postId}`);
-            const greenSpan = document.getElementById(`green-${postId}`);
-            const blueSpan = document.getElementById(`blue-${postId}`);
-
-            if (previousVote === 'red') redSpan.innerText = Math.max(0, parseInt(redSpan.innerText) - 1);
-            if (previousVote === 'green') greenSpan.innerText = Math.max(0, parseInt(greenSpan.innerText) - 1);
-            if (previousVote === 'blue') blueSpan.innerText = Math.max(0, parseInt(blueSpan.innerText) - 1);
-
-            const targetSpan = document.getElementById(`${colorType}-${postId}`);
-            targetSpan.innerText = parseInt(targetSpan.innerText) + 1;
-
-            localStorage.setItem(votedKey, colorType);
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        type: 'vote',
-                        postId: postId,
-                        greenCount: parseInt(greenSpan.innerText),
-                        redCount: parseInt(redSpan.innerText),
-                        blueCount: parseInt(blueSpan.innerText)
-                    })
-                });
-            } catch(e) {}
-        }
-
-        async function deletePost(postId) {
-            if (confirm("هل تريد حذف هذا المنشور؟")) {
-                allPostsCache = allPostsCache.filter(p => p.id !== postId);
-                renderPosts(allPostsCache);
-                renderHistoriqueDates(allPostsCache);
-            }
-        }
-
-        function filterByDate(dateStr) {
-            if (dateStr === 'all') {
-                renderPosts(allPostsCache);
-            } else {
-                const filtered = allPostsCache.filter(p => new Date(p.timestamp).toLocaleDateString() === dateStr);
-                renderPosts(filtered);
-            }
-        }
-
-        window.onload = () => {
-            updateAuthUI();
-            fetchUsersAndData();
+/* ---------- IMAGE HANDLING (unchanged) ---------- */
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            selectedImageBase64 = e.target.result;
+            document.getElementById('imagePreview').src = selectedImageBase64;
+            document.getElementById('imagePreviewContainer').style.display = 'block';
         };
-    </script>
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeSelectedImage() {
+    selectedImageBase64 = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imagePreviewContainer').style.display = 'none';
+}
+
+/* ---------- ACCOUNT (unchanged backend contract) ---------- */
+async function createAccount() {
+    const name = document.getElementById('newUserNameInput').value.trim();
+    const idInput = document.getElementById('newUserIdInput').value.trim();
+
+    if (!name || name.length > 10) {
+        toast("الاسم مطلوب ويجب ألا يتجاوز 10 حروف!");
+        return;
+    }
+
+    const idRegex = /^[0-9]{3}$/;
+    if (!idRegex.test(idInput)) {
+        toast("الـ ID يجب أن يتكون من 3 أرقام فقط!");
+        return;
+    }
+
+    currentUser = { id: idInput, name: name };
+    localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type: 'register_user', ...currentUser })
+        });
+    } catch(e) {}
+
+    closeModal('signupModal');
+    updateAuthUI();
+    toast("تم إنشاء الحساب / Account created");
+    fetchUsersAndData();
+}
+
+function saveSettings() {
+    const newName = document.getElementById('updateUserNameInput').value.trim();
+    if (!newName || newName.length > 10) return;
+    currentUser.name = newName;
+    localStorage.setItem('wsr88_user', JSON.stringify(currentUser));
+    updateAuthUI();
+    closeModal('settingsModal');
+    toast("تم الحفظ / Saved");
+    fetchUsersAndData();
+}
+
+function logoutAccount() {
+    localStorage.removeItem('wsr88_user');
+    currentUser = null;
+    updateAuthUI();
+    closeModal('settingsModal');
+    fetchUsersAndData();
+}
+
+/* ---------- SIDEBAR (mobile) ---------- */
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+
+/* ---------- ARCHIVE / DATE FILTER (unchanged logic) ---------- */
+function renderHistoriqueDates(posts) {
+    const list = document.getElementById('historiqueFilterList');
+    const activeDate = list.dataset.active || 'all';
+    list.innerHTML = `<li onclick="filterByDate('all')" class="${activeDate==='all'?'active-filter':''}">الكل / Tous</li>`;
+
+    const dates = [...new Set(posts.map(p => new Date(p.timestamp).toLocaleDateString()))].filter(d => d !== "Invalid Date");
+    dates.forEach(dateStr => {
+        const li = document.createElement('li');
+        li.innerText = dateStr;
+        if (dateStr === activeDate) li.classList.add('active-filter');
+        li.onclick = () => filterByDate(dateStr);
+        list.appendChild(li);
+    });
+}
+
+/* ---------- POST RENDERING (markup restyled, ids/behavior unchanged) ---------- */
+function renderPosts(posts) {
+    const container = document.getElementById('postsContainer');
+    container.innerHTML = '';
+
+    if (!posts.length) {
+        container.innerHTML = `<div class="empty-state">
+            <div class="glyph">WSR</div>
+            <p>لا توجد منشورات بعد. كن أول من يكتب شيئًا هنا.<br>No posts yet — be the first to write something here.</p>
+        </div>`;
+        return;
+    }
+
+    posts.slice().reverse().forEach((post, index) => {
+        const firstLetter = post.author ? post.author.charAt(0).toUpperCase().substring(0,1) : 'W';
+        const isOwner = currentUser && post.userId === currentUser.id;
+        const avatarBg = avatarColorFor(post.userId || post.author);
+
+        const postCard = document.createElement('div');
+        postCard.className = 'post-card';
+        postCard.style.animationDelay = `${Math.min(index, 8) * 0.05}s`;
+        postCard.innerHTML = `
+            <div class="post-header">
+                <div class="post-author-info">
+                    <div class="post-avatar" style="background:${avatarBg}">${firstLetter}</div>
+                    <div>
+                        <div class="post-author">${post.author || 'Anonymous'}</div>
+                        <div class="post-time">${new Date(post.timestamp).toLocaleDateString()}</div>
+                    </div>
+                </div>
+                ${isOwner ? `<button class="delete-post-btn" onclick="deletePost('${post.id}')">حذف / Delete</button>` : ''}
+            </div>
+            <div class="post-content">${post.content || ''}</div>
+            ${post.image ? `<img src="${post.image}" class="post-image-display" alt="Post Image">` : ''}
+            <div class="post-footer">
+                <button class="dot-btn" id="redbtn-${post.id}" onclick="votePost('${post.id}', 'red')"><span class="dot dot-red"></span> <span id="red-${post.id}">${post.redCount || 0}</span></button>
+                <button class="dot-btn" id="greenbtn-${post.id}" onclick="votePost('${post.id}', 'green')"><span class="dot dot-green"></span> <span id="green-${post.id}">${post.greenCount || 0}</span></button>
+                <button class="dot-btn" id="bluebtn-${post.id}" onclick="votePost('${post.id}', 'blue')"><span class="dot dot-blue"></span> <span id="blue-${post.id}">${post.blueCount || 0}</span></button>
+            </div>
+        `;
+        container.appendChild(postCard);
+
+        const votedKey = currentUser ? `voted_${currentUser.id}_${post.id}` : null;
+        const previousVote = votedKey ? localStorage.getItem(votedKey) : null;
+        if (previousVote) {
+            const btn = document.getElementById(`${previousVote}btn-${post.id}`);
+            if (btn) btn.classList.add('voted');
+        }
+    });
+}
+
+/* ---------- PUBLISH (unchanged backend contract) ---------- */
+async function handlePublish() {
+    if (!currentUser) {
+        toast("يجب إنشاء حساب أولاً لتتمكن من النشر!");
+        openSignupModal();
+        return;
+    }
+
+    const textarea = document.getElementById('postContentInput');
+    const content = textarea.value.trim();
+
+    if (!content && !selectedImageBase64) {
+        toast("يرجى كتابة محتوى المنشور أو اختيار صورة أولاً!");
+        return;
+    }
+
+    const postData = {
+        type: 'new_post',
+        id: 'post_' + Date.now(),
+        author: currentUser.name,
+        userId: currentUser.id,
+        content: content,
+        image: selectedImageBase64 || '',
+        greenCount: 0,
+        redCount: 0,
+        blueCount: 0,
+        timestamp: new Date().toISOString()
+    };
+
+    allPostsCache.push(postData);
+    renderPosts(allPostsCache);
+    renderHistoriqueDates(allPostsCache);
+
+    textarea.value = '';
+    removeSelectedImage();
+    toast("تم النشر / Published");
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(postData)
+        });
+    } catch (error) {}
+}
+
+/* ---------- VOTE (unchanged backend contract) ---------- */
+async function votePost(postId, colorType) {
+    if (!currentUser) {
+        toast("يجب إنشاء حساب للتصويت!");
+        openSignupModal();
+        return;
+    }
+
+    const votedKey = `voted_${currentUser.id}_${postId}`;
+    const previousVote = localStorage.getItem(votedKey);
+
+    if (previousVote === colorType) {
+        toast("لقد قمت بالتصويت مسبقاً بهذا الخيار!");
+        return;
+    }
+
+    const redSpan = document.getElementById(`red-${postId}`);
+    const greenSpan = document.getElementById(`green-${postId}`);
+    const blueSpan = document.getElementById(`blue-${postId}`);
+
+    if (previousVote === 'red') redSpan.innerText = Math.max(0, parseInt(redSpan.innerText) - 1);
+    if (previousVote === 'green') greenSpan.innerText = Math.max(0, parseInt(greenSpan.innerText) - 1);
+    if (previousVote === 'blue') blueSpan.innerText = Math.max(0, parseInt(blueSpan.innerText) - 1);
+    if (previousVote) {
+        const prevBtn = document.getElementById(`${previousVote}btn-${postId}`);
+        if (prevBtn) prevBtn.classList.remove('voted');
+    }
+
+    const targetSpan = document.getElementById(`${colorType}-${postId}`);
+    targetSpan.innerText = parseInt(targetSpan.innerText) + 1;
+
+    const targetBtn = document.getElementById(`${colorType}btn-${postId}`);
+    if (targetBtn) {
+        targetBtn.classList.add('voted');
+        targetBtn.classList.add('vote-bump');
+        setTimeout(() => targetBtn.classList.remove('vote-bump'), 360);
+    }
+
+    localStorage.setItem(votedKey, colorType);
+
+    try {
+        await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'vote',
+                postId: postId,
+                greenCount: parseInt(greenSpan.innerText),
+                redCount: parseInt(redSpan.innerText),
+                blueCount: parseInt(blueSpan.innerText)
+            })
+        });
+    } catch(e) {}
+}
+
+/* ---------- DELETE (unchanged — local-only, as in original) ---------- */
+async function deletePost(postId) {
+    if (confirm("هل تريد حذف هذا المنشور؟")) {
+        allPostsCache = allPostsCache.filter(p => p.id !== postId);
+        renderPosts(allPostsCache);
+        renderHistoriqueDates(allPostsCache);
+    }
+}
+
+/* ---------- FILTER (unchanged) ---------- */
+function filterByDate(dateStr) {
+    const list = document.getElementById('historiqueFilterList');
+    list.dataset.active = dateStr;
+    if (dateStr === 'all') {
+        renderPosts(allPostsCache);
+    } else {
+        const filtered = allPostsCache.filter(p => new Date(p.timestamp).toLocaleDateString() === dateStr);
+        renderPosts(filtered);
+    }
+    renderHistoriqueDates(allPostsCache);
+}
+
+window.onload = () => {
+    initTheme();
+    updateAuthUI();
+    fetchUsersAndData();
+};
+</script>
 </body>
 </html>
