@@ -19,7 +19,7 @@ There is no algorithm deciding what you see. There are no follower counts, no tr
 It's quiet here. And that's the point.
 
 ---
-
+<!-- 
 ## 📸 Look Inside
 
 <div align="center">
@@ -45,7 +45,7 @@ It's quiet here. And that's the point.
 </div>
 
 ---
-
+-->
 ## ✨ What you'll find
 
 **A simple account — and that's it.**  
