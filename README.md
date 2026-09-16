@@ -23,19 +23,19 @@ It's quiet here. And that's the point.
 ## 📸 Look Inside
 
 <div align="center">
-  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sc1.png" alt="The feed" width="100%" />
+  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sc1.jpg" alt="The feed" width="100%" />
 </div>
 
 <br />
 
 <div align="center">
-  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sc2.png" alt="Writing a post" width="100%" />
+  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sc2.jpg" alt="Writing a post" width="100%" />
 </div>
 
 <br />
 
 <div align="center">
-  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sr1.gif" alt="Publishing a note" width="100%" />
+  <img src="https://github.com/mohamed005cheikh-rgb/wsr88/raw/main/images/Sr5.gif" alt="Publishing a note" width="100%" />
 </div>
 
 <br />
